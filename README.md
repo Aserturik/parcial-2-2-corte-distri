@@ -133,15 +133,19 @@ curl -u admin:password123 http://localhost/api/status
 ```
 
 **Ejemplo de envío de mensaje:**
+
 ![alt text](image.png)
 
 **Mensajes persistidos en persistence.json:**
+
 ![alt text](image-3.png)
 
 **Health check del API:**
+
 ![alt text](image-1.png)
 
 **Estado de RabbitMQ:**
+
 ![alt text](image-2.png)
 
 ## Monitoreo y Salud
@@ -181,12 +185,15 @@ curl http://localhost/api/health | jq
 ```
 
 **Estadísticas de mensajes procesados:**
+
 ![alt text](image-4.png)
 
 **Estado detallado de RabbitMQ:**
+
 ![alt text](image-5.png)
 
 **Health check completo del API:**
+
 ![alt text](image-6.png)
 
 ## Acceso Web
@@ -196,12 +203,15 @@ curl http://localhost/api/health | jq
 - **API Health:** <http://localhost/api/health>
 
 **Traefik Dashboard:**
+
 ![alt text](image-7.png)
 
 **RabbitMQ Management Interface:**
+
 ![alt text](image-8.png)
 
 **API Health Status:**
+
 ![alt text](image-9.png)
 
 ## Flujo de Datos
