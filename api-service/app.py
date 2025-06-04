@@ -89,7 +89,30 @@ def publish_message(message):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Endpoint de verificación de salud"""
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+    health_status = {
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'service': 'api-service',
+        'version': '1.0'
+    }
+    
+    # Verificar conexión con RabbitMQ (opcional, no falla si no conecta)
+    try:
+        connection = get_rabbitmq_connection()
+        if connection:
+            connection.close()
+            health_status['rabbitmq'] = 'connected'
+        else:
+            health_status['rabbitmq'] = 'disconnected'
+            health_status['status'] = 'degraded'
+    except Exception as e:
+        health_status['rabbitmq'] = 'error'
+        health_status['rabbitmq_error'] = str(e)
+        health_status['status'] = 'degraded'
+    
+    # El servicio sigue siendo "healthy" aunque RabbitMQ no esté disponible
+    # para que el healthcheck de Docker no falle constantemente
+    return jsonify(health_status)
 
 @app.route('/message', methods=['POST'])
 @auth.login_required

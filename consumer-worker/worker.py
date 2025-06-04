@@ -4,6 +4,7 @@ import pika
 import time
 import logging
 from datetime import datetime
+from health_server import start_health_server_thread
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
@@ -163,6 +164,9 @@ def start_consumer():
     logger.info(f"RabbitMQ Host: {RABBITMQ_HOST}:{RABBITMQ_PORT}")
     logger.info(f"RabbitMQ Queue: {RABBITMQ_QUEUE}")
     logger.info(f"Persistence File: {PERSISTENCE_FILE}")
+    
+    # Iniciar servidor de salud en background
+    start_health_server_thread()
     
     # Inicializar archivo de persistencia si es necesario
     persistence_data = load_persistence_data()
