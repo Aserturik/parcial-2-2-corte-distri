@@ -49,19 +49,23 @@ curl -X POST http://localhost/api/message \
   -u admin:password123 \
   -d '{"message": "Hola mundo!"}'
 
-![alt text](image.png)
-
-- Estos mensajes persisten en el fichero actual persistence.json:
-![alt text](image-3.png)
-
 # Health check API (sin auth)
 curl http://localhost/api/health
-
-![alt text](image-1.png)
 
 # Estado RabbitMQ (requiere auth)
 curl -u admin:password123 http://localhost/api/status
 ```
+
+**Ejemplo de envío de mensaje:**
+![alt text](image.png)
+
+**Mensajes persistidos en persistence.json:**
+![alt text](image-3.png)
+
+**Health check del API:**
+![alt text](image-1.png)
+
+**Estado de RabbitMQ:**
 ![alt text](image-2.png)
 
 ## Monitoreo y Salud
@@ -92,24 +96,36 @@ docker-compose ps
 ```bash
 # Ver estadísticas de mensajes procesados
 cat persistence.json | jq .stats
-![alt text](image-4.png)
 
-# Estado detallado de RabbitMQalt text
+# Estado detallado de RabbitMQ
 curl -u admin:password123 http://localhost/api/status
-![alt text](image-5.png)
 
 # Health check completo del API
 curl http://localhost/api/health | jq
 ```
+
+**Estadísticas de mensajes procesados:**
+![alt text](image-4.png)
+
+**Estado detallado de RabbitMQ:**
+![alt text](image-5.png)
+
+**Health check completo del API:**
 ![alt text](image-6.png)
 
 ## Acceso Web
 
 - **Traefik Dashboard:** <http://localhost:8080>
-  ![alt text](image-7.png)
 - **RabbitMQ Management:** <http://localhost/monitor> (admin/password123)
-  ![alt text](image-8.png)
 - **API Health:** <http://localhost/api/health>
+
+**Traefik Dashboard:**
+![alt text](image-7.png)
+
+**RabbitMQ Management Interface:**
+![alt text](image-8.png)
+
+**API Health Status:**
 ![alt text](image-9.png)
 
 ## Flujo de Datos
