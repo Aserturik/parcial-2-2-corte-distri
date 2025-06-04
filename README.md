@@ -1,6 +1,82 @@
 # Proyecto Parcial 4 - Arquitectura de Microservicios
 
 **Autor:** Alex Hernández
+# 1 Conceptos teóricos
+
+## 1.1 RabbitMQ
+
+### ¿Qué es RabbitMQ?
+
+RabbitMQ es un servicio que implementa colas de mensajeria para la gestion de mensajes entre aplicaciones que pueden correr en docker. Implementando el protocolo AMQP. 
+
+### Cola vs Exchange Fanout
+
+- **Cola (Queue):** Comunicación **punto a punto**. Un mensaje se entrega a **un solo consumidor**. Ideal para distribución de trabajo entre workers.
+- **Exchange Fanout:** Comunicación **uno a muchos**. Un mensaje se envía a **todas las colas** conectadas. Ideal para notificaciones o eventos que múltiples servicios necesitan procesar.
+
+### Dead Letter Queue (DLQ)
+
+Una **DLQ** es una cola especial donde se envían mensajes que no pueden ser procesados exitosamente (fallos repetidos, TTL expirado, cola llena).
+
+**Configuración:**
+
+```json
+"x-dead-letter-exchange": "dlx-exchange",
+"x-dead-letter-routing-key": "failed",
+"x-message-ttl": 60000
+```
+
+## 1.2 Docker y Docker Compose
+
+### Volumen vs Bind Mount
+
+- **Volumen:** Gestionado por Docker, almacenado en `/var/lib/docker/volumes/` es una ruta de la maquina host que almacena lo que los contenedores necesiten fuera de estos.
+
+  ```yaml
+  volumes:
+    - data_volume:/app/data  # Docker gestiona la ubicación dentro de contenedor.
+  ```
+
+- **Bind Mount:** Mapea directamente un directorio del host
+
+  ```yaml
+  volumes:
+    - /host/path:/app/data  # Ruta específica del host como en el persistence.json
+  ```
+
+### network_mode: host
+
+Elimina el **aislamiento de red** del contenedor. El contenedor usa directamente la red del host:
+
+## 1.3 Traefik
+
+### Función en Microservicios
+
+Traefik actúa como **reverse proxy** y **load balancer** que:
+
+- Enruta tráfico basado en reglas (host, path, headers)
+- Descubre servicios automáticamente (Docker, Kubernetes)
+- Balancear carga entre instancias
+- Termina SSL/TLS centralizadamente
+
+### Certificados TLS Automáticos
+
+Traefik integra Let's Encrypt para certificados automáticos:
+
+```yaml
+traefik:
+  command:
+    - --certificatesresolvers.letsencrypt.acme.email=alex@example.com
+    - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+    - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+  labels:
+    - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+```
+
+**Proceso:** Traefik solicita, valida y renueva certificados automáticamente.
+
+---
+# 2 Desarrollo práctico:
 
 ## Arquitectura
 
