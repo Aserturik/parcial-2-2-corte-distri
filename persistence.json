@@ -6,9 +6,19 @@
       "version": "1.0"
     }
   },
-  "messages": [],
+  "messages": [
+    {
+      "content": "Hola mundo!",
+      "timestamp": "2025-06-04T00:32:27.528565",
+      "source": "api-service",
+      "processed_at": "2025-06-04T00:32:27.530647",
+      "worker_id": "4f089111a822",
+      "delivery_tag": 1,
+      "routing_key": "messages"
+    }
+  ],
   "stats": {
-    "total_messages": 0,
-    "last_updated": "2025-06-04T00:25:28.216570"
+    "total_messages": 1,
+    "last_updated": "2025-06-04T00:32:27.530896"
   }
 }
