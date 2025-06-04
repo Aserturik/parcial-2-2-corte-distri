@@ -67,15 +67,10 @@ services:
       - RABBITMQ_DEFAULT_PASS=password123
     ports:
       - "5672:5672"
-      - "15672:15672"  # Management UI
+      - "15672:15672"  # Management UI - acceso directo
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.rabbitmq.rule=Host(`localhost`) && PathPrefix(`/monitor`)"
-      - "traefik.http.routers.rabbitmq.entrypoints=web"
-      - "traefik.http.services.rabbitmq.loadbalancer.server.port=15672"
     networks:
       - parcial-network
 

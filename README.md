@@ -61,8 +61,7 @@ Este proyecto implementa una arquitectura completa de microservicios local que i
 
 ### 3. RabbitMQ
 - **Puerto AMQP:** 5672
-- **Management UI:** 15672
-- **Ruta externa:** `/monitor/*` (via Traefik)
+- **Management UI:** 15672 (acceso directo)
 - **Credenciales:** admin/password123
 
 ### 4. Traefik
@@ -70,7 +69,7 @@ Este proyecto implementa una arquitectura completa de microservicios local que i
 - **Web:** Puerto 80
 - **Enrutamiento:**
   - `/api/*` → API Service
-  - `/monitor/*` → RabbitMQ Management
+  - `/rabbitmq/*` → RabbitMQ Management
 
 ## Configuración y Uso
 
@@ -82,8 +81,8 @@ Este proyecto implementa una arquitectura completa de microservicios local que i
 
 ```bash
 # Clonar el repositorio
-git clone <repository-url>
-cd parcial-4
+git clone https://github.com/Aserturik/parcial-2-2-corte-distri.git
+cd parcial-2-2-corte-distri
 
 # Iniciar todos los servicios
 docker-compose up -d
@@ -107,37 +106,204 @@ docker-compose logs traefik
 
 ### Acceder a interfaces web
 
-- **Traefik Dashboard:** http://localhost:8080
-- **RabbitMQ Management:** http://localhost/monitor (admin/password123)
-- **API Health Check:** http://localhost/api/health
+- **Traefik Dashboard:** <http://localhost:8080>
+- **RabbitMQ Management:** <http://localhost:15672> (admin/password123)
+- **API Health Check:** <http://localhost/api/health>
 
 ## Testing de la API
 
-### Enviar un mensaje
+### Endpoint POST /message - Publicar en Cola RabbitMQ
+
+El endpoint principal `POST /api/message` permite enviar mensajes que serán publicados en la cola RabbitMQ `messages` para ser procesados por el worker consumidor.
+
+#### Autenticación Básica Requerida
+
+El endpoint está protegido con **HTTP Basic Authentication**. Las credenciales disponibles son:
+
+| Usuario | Contraseña | Descripción |
+|---------|------------|-------------|
+| `admin` | `password123` | Usuario administrador |
+| `user` | `userpass` | Usuario regular |
+
+#### Formato del Mensaje
+
+El endpoint espera un JSON con la siguiente estructura:
+```json
+{
+  "message": "Tu mensaje aquí"
+}
+```
+
+#### Ejemplos de Uso con curl
+
+##### 1. Envío básico con usuario admin
 
 ```bash
-# Usando curl con autenticación básica
 curl -X POST http://localhost/api/message \
   -H "Content-Type: application/json" \
   -u admin:password123 \
   -d '{"message": "Hola desde la API!"}'
-
-# Respuesta esperada:
-# {
-#   "status": "success",
-#   "message": "Mensaje enviado correctamente",
-#   "timestamp": "2024-01-01T12:00:00.000000"
-# }
 ```
 
-### Verificar estado
+##### 2. Envío con usuario regular
 
 ```bash
-# Estado de la API
-curl -u admin:password123 http://localhost/api/status
+curl -X POST http://localhost/api/message \
+  -H "Content-Type: application/json" \
+  -u user:userpass \
+  -d '{"message": "Mensaje desde usuario regular"}'
+```
 
-# Health check (sin autenticación)
+##### 3. Mensaje más complejo
+
+```bash
+curl -X POST http://localhost/api/message \
+  -H "Content-Type: application/json" \
+  -u admin:password123 \
+  -d '{
+    "message": "Pedido #12345: Cliente solicita información sobre producto XYZ"
+  }'
+```
+
+##### 4. Usando variables de entorno para seguridad
+
+```bash
+# Definir credenciales
+export API_USER="admin"
+export API_PASS="password123"
+
+# Enviar mensaje
+curl -X POST http://localhost/api/message \
+  -H "Content-Type: application/json" \
+  -u $API_USER:$API_PASS \
+  -d '{"message": "Mensaje usando variables de entorno"}'
+```
+
+#### Respuestas del Endpoint
+
+##### Respuesta Exitosa (201 Created)
+```json
+{
+  "status": "success",
+  "message": "Mensaje enviado correctamente",
+  "timestamp": "2024-01-01T12:00:00.123456"
+}
+```
+
+##### Error de Autenticación (401 Unauthorized)
+```json
+{
+  "message": "The server could not verify that you are authorized to access the URL requested."
+}
+```
+
+##### Error de Formato (400 Bad Request)
+```json
+{
+  "error": "Content-Type debe ser application/json"
+}
+```
+
+o
+
+```json
+{
+  "error": "El campo \"message\" es requerido"
+}
+```
+
+##### Error de Conexión RabbitMQ (500 Internal Server Error)
+```json
+{
+  "status": "error",
+  "message": "Error enviando mensaje a RabbitMQ"
+}
+```
+
+#### Verificar que el Mensaje fue Procesado
+
+Después de enviar un mensaje, puedes verificar que fue procesado correctamente:
+
+```bash
+# 1. Ver el archivo de persistencia
+cat persistence.json | jq .
+
+# 2. Ver logs del worker
+docker-compose logs consumer-worker
+
+# 3. Verificar cola en RabbitMQ Management UI
+# Ir a: http://localhost/rabbitmq -> Queues -> messages
+```
+
+### Otros Endpoints de la API
+
+#### Verificar Estado de Conexión RabbitMQ
+
+```bash
+# Requiere autenticación
+curl -u admin:password123 http://localhost/api/status
+```
+
+Respuesta:
+```json
+{
+  "rabbitmq_connection": "connected",
+  "timestamp": "2024-01-01T12:00:00.123456"
+}
+```
+
+#### Health Check
+
+```bash
+# No requiere autenticación
 curl http://localhost/api/health
+```
+
+Respuesta:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00.123456"
+}
+```
+
+### Script de Prueba Automatizada
+
+Puedes crear un script bash para probar múltiples mensajes:
+
+```bash
+#!/bin/bash
+
+echo "=== Probando API de Mensajes ==="
+
+# Configuración
+API_URL="http://localhost/api/message"
+USER="admin"
+PASS="password123"
+
+# Array de mensajes de prueba
+messages=(
+  "Mensaje de prueba #1"
+  "Pedido urgente: Cliente VIP"
+  "Notificación: Sistema actualizado"
+  "Alert: Revisar inventario"
+)
+
+# Enviar cada mensaje
+for i in "${!messages[@]}"; do
+  echo "Enviando mensaje $((i+1))..."
+  
+  curl -s -X POST "$API_URL" \
+    -H "Content-Type: application/json" \
+    -u "$USER:$PASS" \
+    -d "{\"message\": \"${messages[i]}\"}" | jq .
+  
+  echo ""
+  sleep 1
+done
+
+echo "=== Verificando persistencia ==="
+cat persistence.json | jq .stats
 ```
 
 ## Estructura de Persistencia
