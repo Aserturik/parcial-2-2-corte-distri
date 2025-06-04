@@ -2,9 +2,25 @@
 
 **Autor:** Alex Hernández
 
-## Descripción
+## Estructura de Archivos
 
-Este proyecto implementa una arquitectura completa de microservicios local que incluye:
+```
+docker-compose.yml
+persistence.json
+README.md
+api-service/
+    app.py
+    Dockerfile
+    requirements.txt
+consumer-worker/
+    Dockerfile
+    requirements.txt
+    worker.py
+rabbitmq/
+    enabled_plugins
+    rabbitmq.conf
+images/
+```
 
 - **API REST** en Flask que produce mensajes
 - **Worker consumidor** que procesa mensajes desde RabbitMQ
@@ -61,7 +77,7 @@ Este proyecto implementa una arquitectura completa de microservicios local que i
 
 ### 3. RabbitMQ
 - **Puerto AMQP:** 5672
-- **Management UI:** 15672 (acceso directo)
+- **Management UI:** 15672 (acceso directo) o `/monitor` (via Traefik)
 - **Credenciales:** admin/password123
 
 ### 4. Traefik
@@ -69,7 +85,7 @@ Este proyecto implementa una arquitectura completa de microservicios local que i
 - **Web:** Puerto 80
 - **Enrutamiento:**
   - `/api/*` → API Service
-  - `/rabbitmq/*` → RabbitMQ Management
+  - `/monitor/*` → RabbitMQ Management
 
 ## Configuración y Uso
 
@@ -107,7 +123,7 @@ docker-compose logs traefik
 ### Acceder a interfaces web
 
 - **Traefik Dashboard:** <http://localhost:8080>
-- **RabbitMQ Management:** <http://localhost:15672> (admin/password123)
+- **RabbitMQ Management:** <http://localhost/monitor> (admin/password123)
 - **API Health Check:** <http://localhost/api/health>
 
 ## Testing de la API
@@ -232,7 +248,7 @@ cat persistence.json | jq .
 docker-compose logs consumer-worker
 
 # 3. Verificar cola en RabbitMQ Management UI
-# Ir a: http://localhost/rabbitmq -> Queues -> messages
+# Ir a: http://localhost/monitor -> Queues -> messages
 ```
 
 ### Otros Endpoints de la API
@@ -355,6 +371,14 @@ Los mensajes se guardan en `persistence.json` con la siguiente estructura:
 - **`messages-data`:** Volumen para datos del worker
 - **`rabbitmq-data`:** Persistencia de datos RabbitMQ
 - **`persistence.json`:** Archivo bind mount para mensajes procesados
+- **`rabbitmq/`:** Archivos de configuración personalizados de RabbitMQ
+
+### Configuración de RabbitMQ
+
+El proyecto incluye configuración personalizada para RabbitMQ que permite el acceso correcto a través del path `/monitor`:
+
+- **`rabbitmq/rabbitmq.conf`:** Configuración principal con `management.path_prefix = /monitor`
+- **`rabbitmq/enabled_plugins`:** Plugins habilitados (management, prometheus, federation)
 
 ## Monitoreo y Troubleshooting
 
